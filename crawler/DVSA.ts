@@ -38,12 +38,15 @@ export class DVSA {
     )
   }
 
-  private async getPageTitle (): Promise<string> {
-    return this.getSelectorText('.page-header h1')
+  private async checkPageTitle (expectedTitle: string) : Promise<void> {
+    const actualTitle = await this.getSelectorText('.page-header h1')
+    if (expectedTitle !== actualTitle) {
+      throw new Error(`Expected to be on page: [${expectedTitle}], actual: [${actualTitle}]`)
+    }
   }
 
   private async getSelectorText (selector: string): Promise<string> {
-    return this.page.$eval(selector, element => element.textContent)
+    return this.page.$eval(selector, node => node.textContent)
   }
 
   async login (): Promise<boolean> {
@@ -71,10 +74,12 @@ export class DVSA {
     }
 
     // At Page: Choose type of test
+    await this.checkPageTitle('Choose type of test')
     await this.click('#test-type-car')
     await this.simulateUserSleep()
 
     // At Page: Licence details - Car test
+    await this.checkPageTitle('Licence details - Car test')
     await this.type('#driving-licence', this.drivingLicense)
     await this.click('#extended-test-no')
     await this.click('#special-needs-none')
@@ -82,6 +87,7 @@ export class DVSA {
     await this.simulateUserSleep()
 
     // At Page: Test date - Car test
+    await this.checkPageTitle('Test date - Car test')
     const errorMessage = await this.page.$('#driverLicenceNumber-invalid')
     const isLoggedIn = errorMessage === null
     return isLoggedIn
@@ -89,17 +95,20 @@ export class DVSA {
 
   async checkAvailability (postcode: string, checkNumNearestTestCenters = 80): Promise<DVSATimeSlot[]> {
     // Preconditions - Check state
-    if (await this.getPageTitle() === 'Test date - Car test') {
+    try {
       // At Page: Test date - Car test
+      // Enter a dummy date to continue
+      await this.checkPageTitle('Test date - Car test')
       await this.type('#test-choice-calendar', format(new Date(), 'dd/MM/yy'))
       await this.click('#driving-licence-submit')
       await this.simulateUserSleep()
+    } catch (ignored) {
+      // This means we are already
+      // At page: Test centre - Car test
     }
 
-    if (await this.getPageTitle() !== 'Test centre - Car test') {
-      throw new Error('Not logged in')
-    }
     // At Page: Test centre - Car test
+    await this.checkPageTitle('Test centre - Car test')
     await this.type('#test-centres-input', postcode)
     await this.click('#test-centres-submit')
     await this.simulateUserSleep()
@@ -146,10 +155,5 @@ export class DVSA {
 
     return dvsaTimeSlots
       .filter(slot => slot.dates.length) // discard invalid results with empty slots
-  }
-
-  async close (): Promise<void> {
-    await this.page?.close()
-    await this.browser?.close()
   }
 }
