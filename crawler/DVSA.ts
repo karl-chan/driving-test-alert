@@ -145,6 +145,7 @@ export class DVSA {
         const timestamp = await cell.$eval('.SlotPicker-slot', node => +node.getAttribute('value') / 1000)
         return fromUnixTime(timestamp)
       })
+      await tab.close()
 
       return {
         name,
@@ -155,5 +156,10 @@ export class DVSA {
 
     return dvsaTimeSlots
       .filter(slot => slot.dates.length) // discard invalid results with empty slots
+  }
+
+  async close (): Promise<void> {
+    await this.page?.close()
+    await this.browser?.close()
   }
 }
