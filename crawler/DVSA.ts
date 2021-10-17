@@ -14,7 +14,7 @@ export class DVSA {
   private browser: Browser
   private page: Page
 
-  constructor ({ drivingLicense, headless = false }: {
+  constructor ({ drivingLicense, headless = true }: {
     drivingLicense: string,
     headless?: boolean
   }) {
@@ -108,7 +108,7 @@ export class DVSA {
     }
 
     // At Page: Test centre - Car test
-    await this.checkPageTitle('Test centre - Car test')
+    await this.checkPageTitle('Test centre search and results - Car test')
     await this.type('#test-centres-input', postcode)
     await this.click('#test-centres-submit')
     await this.simulateUserSleep()
