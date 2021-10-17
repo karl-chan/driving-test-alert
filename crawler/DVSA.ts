@@ -3,7 +3,7 @@ import { format, fromUnixTime } from 'date-fns'
 import playwright, { Browser, Page } from 'playwright'
 
 export interface DVSATimeSlot {
-  name: string,
+  testCentre: string,
   address: string,
   dates: Date[]
 }
@@ -68,7 +68,7 @@ export class DVSA {
     await this.simulateUserSleep()
 
     // At page: Queue-it
-    // The queue-it page is shown non-deterministic, wait for it to redirect back to DVSA page
+    // The queue-it page is shown non-deterministically, wait for it to redirect back to DVSA page
     if (this.page.url().includes('queue.driverpracticaltest.dvsa.gov.uk')) {
       await this.page.waitForURL(/^https:\/\/driverpracticaltest.dvsa.gov.uk\/application.*/)
     }
@@ -130,7 +130,7 @@ export class DVSA {
     })
 
     const dvsaTimeSlots = await Promise.mapSeries(availableResults, async result => {
-      const name = await result.$eval('h4', node => node.textContent)
+      const testCentre = await result.$eval('h4', node => node.textContent)
       const address = await result.$eval('address', node => node.textContent)
 
       // Open new tab and get actual available time slots
@@ -148,7 +148,7 @@ export class DVSA {
       await tab.close()
 
       return {
-        name,
+        testCentre,
         address,
         dates
       }
